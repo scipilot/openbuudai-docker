@@ -15,21 +15,8 @@
 # Linux host: 
 #   docker run --device /dev/ttyUSB0 
 #
-# Mac host:
-#   You need "Docker Toolbox" (VirtualBox, Docker Machine) not "Docker for Mac" (Hyperkit) which 
-#   can't/won't support device passthrough.
-#   Explanation and status of Docker for Mace ever supporting it: https://github.com/docker/for-mac/issues/900
-#   In Docker Toolbox:
-#     Enable USB in VirtualBox
-#     docker run --volume /dev/bus/usb:/dev/bus/usb:rw
-# 
-#   See
-#     https://docs.docker.com/docker-for-mac/docker-toolbox/#docker-toolbox-and-docker-desktop-for-mac-coexistence
-#     Various articles on how to do it (with VirtualBox, Docker Machine directly, not mentioning toolbox)
-#     https://milad.ai/docker/2018/05/06/access-usb-devices-in-container-in-mac.html
-#     http://gw.tnode.com/docker/docker-machine-with-usb-support-on-windows-macos/
-# 
-#   But... if you need VirtualBox anyway, you might as well jut run Linux in it.
+# Mac host: WIP see macosx.md
+#
 #
 # Windows host: (todo - I don't have one!)
 #
@@ -42,13 +29,14 @@ FROM ubuntu
 ENV DEBIAN_FRONTEND=noninteractive
 # Note: defaults to UTC, Run 'dpkg-reconfigure tzdata' if you wish to change it.
 
+# usbutils for diagnostics inc. lsusb (not needed to run)
 # build-essential: gcc, g++, make
 # supervisor: is in the ubuntu-universe repo, so first add the apt-add-repository command via software-properties-common
 # Openbuudai requires: libqt4-dev libfftw3-dev libusb-1.0-0-dev 
 # VNC gui: x11vnc xvfb fluxbox 
 # All done in one RUN and cleaned up to reduce image layer size.
 RUN apt-get update -qqy \
- && apt-get install -qqy wget zip \
+ && apt-get install -qqy wget zip usbutils vim \
  && apt-get install -qqy build-essential \
  && apt-get install -qqy libqt4-dev libfftw3-dev libusb-1.0-0-dev \
  && apt-get install -qqy software-properties-common \
@@ -113,6 +101,11 @@ ENV START_XVFB true
 COPY openbuudai.conf /etc/supervisor/conf.d/
 COPY supervisord.conf /etc
 RUN  mkdir -p /var/run/supervisor /var/log/supervisor
+
+#====================================================
+# Make this tool for diagnosis
+COPY listUSBDevices.c /app/
+RUN cd /app && gcc -o listUSBDevices listUSBDevices.c -lusb-1.0
 
 #====================================================
 
