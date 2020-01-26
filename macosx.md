@@ -294,4 +294,22 @@ I thought I'd give it a quick retry, with any recent updates.
 Currrent DockerDesktop:2.1.00 Engine:19.03.01 Machine:0.16.1
 Updated  DockerDesktop:2.1.05 Engine:19.? Machine:0.?
 
-Remembering what to do:
+Refresher:
+- I have wrote a Docker container for the Linux OpenBuudai, with X11, Fluxbox, some USB tools.
+- It has trouble accessing the MacOSX USB devices. Docker privilege mode helped.
+- listUSBDevices is a handy diagnostic tool
+- libusb is a critical component
+- VirtualHere is a USB-over-IP client/server which almost worked, but had connection problems.
+
+## SOLUTION!
+
+After a lot of experiments it turns out you need
+ - Docker-machine + Virtual Box
+ - USB 2.0 enabled
+ - USB "filter" set up for the device.
+ - --privileged always
+ - -v /dev/usb/bus mapped as a volume - only for it's been plugged in. You can run a container without this if it's been run once with. I think this is flashing the firmware?
+
+This works:
+
+    docker run -it --rm -v ~/dev/projects:/projects -p 5901:5900  --privileged -v /dev/bus/usb:/dev/bus/usb --name openbuudai scipilot/openbuudai

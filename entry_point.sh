@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
-
 /usr/bin/supervisord --configuration /etc/supervisord.conf &
 SUPERVISOR_PID=$!
-
-# Also start the GUI (todo: add it to supervisor?)
-/usr/local/bin/openhantek
 
 function shutdown {
     echo "Trapped SIGTERM/SIGINT/x so shutting down supervisord..."

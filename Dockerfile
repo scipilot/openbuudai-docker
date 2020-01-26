@@ -5,20 +5,22 @@
 # VNC password is:"secret" (set below)
 # usage e.g.:
 #
-#   docker build -t openbuudai .
-#   docker run -it --rm -p 5901:5900 --device /dev/ttyUSB0 openbuudai
-#   (mac) Finder: connect to server `vnc://0.0.0.0:5901`   
-#   bash> /usr/local/bin/openhantek
+#   docker build -t scipilot/openbuudai .
 #
-# How to connect USB through?
+# Connecting the USB through is a bit tricky!
 #
 # Linux host: 
 #   docker run --device /dev/ttyUSB0 
 #
-# Mac host: WIP see macosx.md
+# Mac host: See macosx.md - it only works in Docker Machine (not Docker Desktop)
+#   docker run -it --rm -p 5901:5900  --privileged -v /dev/bus/usb:/dev/bus/usb --name openbuudai scipilot/openbuudai
+#   open vnc://0.0.0.0:5901
 #
+#   - Or Finder: connect to server `vnc://0.0.0.0:5901`   (aka "Screen Sharing")
+#   - where 0.0.0.0 is the docker-machine's IP from `$DOCKER_HOST` (without the tcp: and :port)
+#   - or from `docker-machine ip default` (if 'default' is your boot2docker name)
 #
-# Windows host: (todo - I don't have one!)
+# Windows host: (todo - I don't have one! But the original software runs natively anyway.)
 #
 #==================================================================================================
 FROM ubuntu
@@ -36,7 +38,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 # VNC gui: x11vnc xvfb fluxbox 
 # All done in one RUN and cleaned up to reduce image layer size.
 RUN apt-get update -qqy \
- && apt-get install -qqy wget zip usbutils vim \
+ && apt-get install -qqy apt-utils
+RUN apt-get install -qqy wget zip usbutils vim \
  && apt-get install -qqy build-essential \
  && apt-get install -qqy libqt4-dev libfftw3-dev libusb-1.0-0-dev \
  && apt-get install -qqy software-properties-common \
@@ -77,8 +80,7 @@ RUN cd /app/OpenBuudai-master/Source \
 
 # Taking inspiration from Selenium Standalone Debug, which uses x11-vnc, fluxbox and Xvfb
 #   e.g. https://github.com/SeleniumHQ/docker-selenium/blob/master/NodeFirefoxDebug/Dockerfile and others
-# so could base this image off NodeDebug?
-# I also skipped all the user stuff.
+# I skipped all the user stuff.
 
 # see top for: apt-get x11vnc xvfb fluxbox 
 
@@ -97,15 +99,15 @@ ENV SCREEN_DEPTH 24
 ENV DISPLAY :99.0
 ENV START_XVFB true
 
-# Supervisor configuration file
+# Supervisor configuration, in case the programs crash.
 COPY openbuudai.conf /etc/supervisor/conf.d/
 COPY supervisord.conf /etc
 RUN  mkdir -p /var/run/supervisor /var/log/supervisor
 
 #====================================================
-# Make this tool for diagnosis
-COPY listUSBDevices.c /app/
-RUN cd /app && gcc -o listUSBDevices listUSBDevices.c -lusb-1.0
+# Make this tool for USB diagnosis
+# COPY listUSBDevices.c /app/
+# RUN cd /app && gcc -o listUSBDevices listUSBDevices.c -lusb-1.0
 
 #====================================================
 
